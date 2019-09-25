@@ -51,7 +51,9 @@ func BenchmarkGenerateFromPassword(b *testing.B) {
 	var opts Options
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		GenerateFromPassword(password, opts)
+		if _, err := GenerateFromPassword(password, opts); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -59,7 +61,9 @@ func benchmarkArgon2(time, memory uint32, threads uint8, b *testing.B) {
 	password := []byte("password")
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		GenerateFromPassword(password, Options{Time: time, Memory: memory, Threads: threads})
+		if _, err := GenerateFromPassword(password, Options{Time: time, Memory: memory, Threads: threads}); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 

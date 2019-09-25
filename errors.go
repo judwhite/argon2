@@ -1,6 +1,6 @@
 package argon2
 
-type invalidFormat struct{
+type invalidFormat struct {
 	message string
 }
 
