@@ -1,0 +1,63 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.13
+
+    working_directory: ~/argon2
+    steps:
+      - checkout
+
+      - run:
+          name: Download Linters
+          when: always
+          command: |
+            go get -u golang.org/x/tools/cmd/goimports
+            go get -u github.com/kisielk/errcheck
+            go get -u golang.org/x/lint/golint
+            go get -u github.com/mdempsky/unconvert
+            go get -u github.com/client9/misspell/cmd/misspell
+            go get -u honnef.co/go/tools/cmd/staticcheck
+
+      - run:
+          name: "Go Lint: gofmt"
+          when: always
+          command: |
+            ! gofmt -l -s -d . | grep '^'
+
+      - run:
+          name: "Go Lint: goimports"
+          when: always
+          command: |
+            ! goimports -l -d . | grep '^'
+
+      - run:
+          name: "Go Lint: errcheck"
+          when: always
+          command: errcheck -blank -asserts ./...
+
+      - run:
+          name: "Go Lint: golint"
+          when: always
+          command: golint -set_exit_status ./...
+
+      - run:
+          name: "Go Lint: unconvert"
+          when: always
+          command: unconvert ./...
+
+      - run:
+          name: "Go Lint: misspell"
+          when: always
+          command: |
+            GO_FILES=$(find . -type f -iname "*.go")
+            misspell -error -locale US $GO_FILES
+
+      - run:
+          name: "Go Lint: staticcheck"
+          when: always
+          command: staticcheck ./...
+
+      - run:
+          name: Go Unit Tests
+          command: go test -v -count 1 ./...
