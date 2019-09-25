@@ -1,9 +1,11 @@
-package argon2
+package argon2_test
 
 import (
 	"crypto/subtle"
 	"encoding/hex"
 	"testing"
+
+	"github.com/judwhite/argon2"
 )
 
 func TestVectors(t *testing.T) {
@@ -13,7 +15,7 @@ func TestVectors(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test %d: failed to decode hash: %v", i, err)
 		}
-		hash, err := GenerateHashBytes(password, salt, v.time, v.memory, v.threads, uint32(len(want)))
+		hash, err := argon2.GenerateHashBytes(password, salt, v.time, v.memory, v.threads, uint32(len(want)))
 		if err != nil {
 			t.Fatalf("Test %d: failed to generate hash: %v", i, err)
 		}
@@ -25,11 +27,11 @@ func TestVectors(t *testing.T) {
 
 func TestGenerateFromPassword(t *testing.T) {
 	password := []byte("password")
-	str, err := GenerateFromPassword(password, Options{})
+	str, err := argon2.GenerateFromPassword(password, argon2.Options{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = CompareHashAndPassword(str, password); err != nil {
+	if err = argon2.CompareHashAndPassword(str, password); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -37,21 +39,21 @@ func TestGenerateFromPassword(t *testing.T) {
 func TestGenerateFromPasswordMismatch(t *testing.T) {
 	password := []byte("password")
 	notPassword := []byte("notPassword")
-	str, err := GenerateFromPassword(password, Options{})
+	str, err := argon2.GenerateFromPassword(password, argon2.Options{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = CompareHashAndPassword(str, notPassword); !IsPasswordMismatch(err) {
+	if err = argon2.CompareHashAndPassword(str, notPassword); !argon2.IsPasswordMismatch(err) {
 		t.Fatalf("hashes should not match")
 	}
 }
 
 func BenchmarkGenerateFromPassword(b *testing.B) {
 	password := []byte("password")
-	var opts Options
+	var opts argon2.Options
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		if _, err := GenerateFromPassword(password, opts); err != nil {
+		if _, err := argon2.GenerateFromPassword(password, opts); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -59,9 +61,10 @@ func BenchmarkGenerateFromPassword(b *testing.B) {
 
 func benchmarkArgon2(time, memory uint32, threads uint8, b *testing.B) {
 	password := []byte("password")
+	opts := argon2.Options{Time: time, Memory: memory, Threads: threads}
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		if _, err := GenerateFromPassword(password, Options{Time: time, Memory: memory, Threads: threads}); err != nil {
+		if _, err := argon2.GenerateFromPassword(password, opts); err != nil {
 			b.Fatal(err)
 		}
 	}
