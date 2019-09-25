@@ -1,3 +1,11 @@
+// Package argon2 provides an interface around golang.org/x/crypto/argon2 similar to the interface of the bcrypt package.
+//
+// This package is intended for password hashing, particularly for user databases. GenerateFromPassword returns a
+// formatted string suitable for database storage. This value can be used by CompareHashAndPassword to check if
+// a plaintext password matches the hash.
+//
+// For more information about Argon2 visit https://github.com/p-h-c/phc-winner-argon2 and
+// https://godoc.org/golang.org/x/crypto/argon2.
 package argon2
 
 import (
@@ -86,4 +94,24 @@ func GenerateHashBytes(password, salt []byte, time, memory uint32, threads uint8
 	}
 
 	return a2.IDKey(password, salt, time, memory, threads, keyLen), nil
+}
+
+// Parameters returns the hashing parameters used to create the given hashed password. When, in the future, the hashing
+// cost of a password system needs to be changed in order to adjust for greater computational power, this function
+// allows one to establish which passwords need to be updated.
+func Parameters(hashedPassword string) (HashParameters, error) {
+	t, err := parse(hashedPassword)
+	if err != nil {
+		return HashParameters{}, err
+	}
+
+	return HashParameters{
+		Function: t.function,
+		Version:  t.version,
+		Time:     t.time,
+		Memory:   t.memory,
+		Threads:  t.threads,
+		SaltLen:  uint32(len(t.salt)),
+		KeyLen:   t.keyLen,
+	}, nil
 }
